@@ -1,0 +1,3 @@
+[submodule "Cocotte/Submodules/CoreLib"]
+	path = Cocotte/Submodules/CoreLib
+	url = https://github.com/TomasGC/CoreLib.git

@@ -1,0 +1,123 @@
+[
+  {
+    "$unwind": {
+      "path": "$Ingredients",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$lookup": {
+      "from": "Weeks",
+      "localField": "UserId",
+      "foreignField": "UserId",
+      "as": "Week"
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Week",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Week.Days",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Week.Days.Meals",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$lookup": {
+      "from": "Recipes",
+      "localField": "Week.Days.Meals._id",
+      "foreignField": "_id",
+      "as": "Recipe"
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Recipe",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Recipe.IngredientIds",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$group": {
+      "_id": {
+        "_id": "$_id",
+        "Ingredients": "$Ingredients"
+      },
+      "UserId": { "$first": "$UserId" },
+      "TotalQuantity": {
+        "$sum": {
+          "$cond": {
+            "if": { "$eq": [ "$Ingredients._id", "$Recipe.IngredientIds.k" ] },
+            "then": { "$multiply": [ "$Recipe.IngredientIds.v", "$Week.Days.Meals.NumberOfPeople" ] },
+            "else": 0
+          }
+        }
+      }
+    }
+  },
+  {
+    "$group": {
+      "_id": {
+        "_id": "$_id._id",
+        "Ingredients": "$_id.Ingredients"
+      },
+      "UserId": { "$first": "$UserId" },
+      "TotalQuantity": { "$first": "$TotalQuantity" }
+    }
+  },
+  {
+    "$lookup": {
+      "from": "Ingredients",
+      "localField": "_id.Ingredients._id",
+      "foreignField": "_id",
+      "as": "Ingredient"
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Ingredient",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$project": {
+      "_id": "$_id._id",
+      "UserId": "$UserId",
+      "Ingredients": {
+        "_id": "$_id.Ingredients._id",
+        "Checked": "$_id.Ingredients.Checked",
+        "Ingredient": "$Ingredient",
+        "TotalQuantity": "$TotalQuantity"
+      }
+    }
+  },
+  {
+    "$group": {
+      "_id": "$_id",
+      "UserId": { "$first": "$UserId" },
+      "Ingredients": { "$push": "$Ingredients" },
+      "TotalPrice": {
+        "$sum": {
+          "$multiply": [
+            "$Ingredients.Ingredient.BasePrice",
+            { "$divide": [ "$Ingredients.TotalQuantity", "$Ingredients.Ingredient.BaseQuantity" ] }
+          ]
+        }
+      }
+    }
+  }
+]

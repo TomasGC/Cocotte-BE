@@ -1,0 +1,66 @@
+[
+  {
+    "$unwind": {
+      "path": "$IngredientIds",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$lookup": {
+      "from": "Ingredients",
+      "localField": "IngredientIds.k",
+      "foreignField": "_id",
+      "as": "Ingredients"
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Ingredients",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$project": {
+      "Name": "$Name",
+      "IngredientIds": "$IngredientIds",
+      "TimesCooked": "$TimesCooked",
+      "LastCooked": "$LastCooked",
+      "Type": "$Type",
+      "Seasons": "$Seasons",
+      "UserId": "$UserId",
+      "Ingredients": "$Ingredients",
+      "_id": "$_id",
+      "Price": {
+        "$multiply": [
+          "$Ingredients.BasePrice",
+          { "$divide": [ "$IngredientIds.v", "$Ingredients.BaseQuantity" ] }
+        ]
+      }
+    }
+  },
+  {
+    "$group": {
+      "_id": "$_id",
+      "Name": { "$first": "$Name" },
+      "IngredientIds": { "$push": "$IngredientIds" },
+      "TimesCooked": { "$first": "$TimesCooked" },
+      "LastCooked": { "$first": "$LastCooked" },
+      "Type": { "$first": "$Type" },
+      "UserId": { "$first": "$UserId" },
+      "Seasons": { "$first": "$Seasons" },
+      "Ingredients": {
+        "$push": {
+          "Name": "$Ingredients.Name",
+          "BasePrice": "$Ingredients.BasePrice",
+          "BaseQuantity": "$Ingredients.BaseQuantity",
+          "Quantities": "$Ingredients.Quantities",
+          "Unit": "$Ingredients.Unit",
+          "UserId": "$Ingredients.UserId",
+          "_id": "$Ingredients._id",
+          "SelectedQuantity": "$IngredientIds.v"
+        }
+      },
+      "Price": { "$sum": "$Price" }
+    }
+  }
+]

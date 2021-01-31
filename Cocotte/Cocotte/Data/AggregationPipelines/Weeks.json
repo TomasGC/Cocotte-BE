@@ -1,0 +1,218 @@
+[
+  {
+    "$unwind": {
+      "path": "$Days",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Days.Meals",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$lookup": {
+      "from": "Recipes",
+      "localField": "Days.Meals.RecipeId",
+      "foreignField": "_id",
+      "as": "Days.Meals.Recipe"
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Days.Meals.Recipe",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Days.Meals.Recipe.IngredientIds",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$lookup": {
+      "from": "Ingredients",
+      "localField": "Days.Meals.Recipe.IngredientIds.k",
+      "foreignField": "_id",
+      "as": "Days.Meals.Recipe.Ingredients"
+    }
+  },
+  {
+    "$unwind": {
+      "path": "$Days.Meals.Recipe.Ingredients",
+      "preserveNullAndEmptyArrays": true
+    }
+  },
+  {
+    "$project": {
+      "_id": "$_id",
+      "StartTime": "$StartTime",
+      "UserId": "$UserId",
+      "Days": {
+        "_id": "$Days._id",
+        "Date": "$Days.Date",
+        "Meals": {
+          "_id": "$Days.Meals._id",
+          "Type": "$Days.Meals.Type",
+          "RecipeId": "$Days.Meals.RecipeId",
+          "Recipe": {
+            "_id": "$Days.Meals.Recipe._id",
+            "Name": "$Days.Meals.Recipe.Name",
+            "TimesCooked": "$Days.Meals.Recipe.TimesCooked",
+            "Type": "$Days.Meals.Recipe.Type",
+            "Seasons": "$Days.Meals.Recipe.Seasons",
+            "IngredientIds": "$Days.Meals.Recipe.IngredientIds",
+            "Ingredients": {
+              "_id": "$Days.Meals.Recipe.Ingredients._id",
+              "Name": "$Days.Meals.Recipe.Ingredients.Name",
+              "BasePrice": "$Days.Meals.Recipe.Ingredients.BasePrice",
+              "BaseQuantity": "$Days.Meals.Recipe.Ingredients.BaseQuantity",
+              "Unit": "$Days.Meals.Recipe.Ingredients.Unity",
+              "Quantities": "$Days.Meals.Recipe.Ingredients.Quantities",
+              "SelectedQuantity": "$Days.Meals.Recipe.IngredientIds.v"
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "$group": {
+      "StartTime": {
+        "$first": "$StartTime"
+      },
+      "UserId": {
+        "$first": "$UserId"
+      },
+      "Days": {
+        "$first": "$Days"
+      },
+      "_id": {
+        "_id": "$_id",
+        "Days": "$Days",
+        "Meals": "$Days.Meals",
+        "RecipeName": "$Days.Meals.Recipe.Name",
+        "IngredientIds": "$Days.Meals.Recipe.IngredientIds",
+        "Ingredients": "$Days.Meals.Recipe.Ingredients"
+      }
+    }
+  },
+  {
+    "$group": {
+      "Days": {
+        "$first": "$_id.Days"
+      },
+      "StartTime": {
+        "$first": "$StartTime"
+      },
+      "UserId": {
+        "$first": "$UserId"
+      },
+      "_id": {
+        "_id": "$_id._id",
+        "DaysDate": "$_id.Days.Date",
+        "RecipeName": "$_id.RecipeName"
+      },
+      "Meals": {
+        "$first": "$_id.Meals"
+      },
+      "IngredientIds": {
+        "$push": "$_id.IngredientIds"
+      },
+      "Ingredients": {
+        "$push": "$_id.Ingredients"
+      },
+      "Price": {
+        "$sum": {
+          "$multiply": [
+            "$_id.Ingredients.BasePrice",
+            {
+              "$divide": [
+                "$_id.IngredientIds.v",
+                "$_id.Ingredients.BaseQuantity"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "$project": {
+      "StartTime": "$StartTime",
+      "_id": "$_id",
+      "UserId": "$UserId",
+      "Meals": {
+        "_id": "$Meals._id",
+        "Type": "$Meals.Type",
+        "RecipeId": "$Meals.RecipeId",
+        "Recipe": {
+          "_id": "$Meals.Recipe._id",
+          "Name": "$Meals.Recipe.Name",
+          "TimesCooked": "$Meals.Recipe.TimesCooked",
+          "LastCooked": "$Meals.Recipe.LastCooked",
+          "Type": "$Meals.Recipe.Type",
+          "Seasons": "$Meals.Recipe.Seasons",
+          "Price": "$Price",
+          "Ingredients": "$Ingredients",
+          "IngredientIds": "$IngredientIds"
+        }
+      },
+      "Days": "$Days"
+    }
+  },
+  {
+    "$group": {
+      "Days": {
+        "$first": "$Days"
+      },
+      "StartTime": {
+        "$first": "$StartTime"
+      },
+      "UserId": {
+        "$first": "$UserId"
+      },
+      "_id": {
+        "_id": "$_id._id",
+        "DaysDate": "$_id.DaysDate"
+      },
+      "Meals": {
+        "$push": "$Meals"
+      }
+    }
+  },
+  {
+    "$project": {
+      "StartTime": "$StartTime",
+      "_id": "$_id._id",
+      "UserId": "$UserId",
+      "Days": {
+        "Date": "$Days.Date",
+        "Meals": "$Meals",
+        "Price": {
+          "$sum": "$Meals.Recipe.Price"
+        },
+        "_id": "$Days._id"
+      }
+    }
+  },
+  {
+    "$group": {
+      "Days": {
+        "$push": "$Days"
+      },
+      "StartTime": {
+        "$first": "$StartTime"
+      },
+      "UserId": {
+        "$first": "$UserId"
+      },
+      "_id": "$_id",
+      "TotalPrice": {
+        "$sum": "$Days.Price"
+      }
+    }
+  }
+]
