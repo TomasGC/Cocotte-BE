@@ -38,5 +38,5 @@ PublishProfiles/
 *.[Pp]ublish.xml
 *.azurePubxml
 
-# New submodules (to remove if you want to add new ones).
-.gitmodules
+# New submodule with the config of MongoDB and crypted secret key.
+Cocotte/Submodules/CocotteConfig/

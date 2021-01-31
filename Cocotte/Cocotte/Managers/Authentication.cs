@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using Cocotte.MongoDb.Types;
 using Cocotte.Types.Responses;
+using CocotteConfig.Tools;
 using CoreLib.Managers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -12,7 +13,7 @@ namespace Cocotte.Managers {
 	/// <summary>
 	/// Authentication class.
 	/// </summary>
-	public class Authentication {
+	public static class Authentication {
 		/// <summary>
 		/// Logger
 		/// </summary>
@@ -105,7 +106,7 @@ namespace Cocotte.Managers {
 				session = new Sessions {
 					CreationDate = DateTime.Now,
 					UserId = user._id,
-					Key = "Here you put the code with the session key."
+					Key = Crypto.GenerateUniqueKey()
 				};
 
 				MongoManager.AddItemInCollection(session);
