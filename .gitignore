@@ -37,3 +37,6 @@ PublishProfiles/
 # Publish Web Output.
 *.[Pp]ublish.xml
 *.azurePubxml
+
+# New submodules (to remove if you want to add new ones).
+.gitmodules
